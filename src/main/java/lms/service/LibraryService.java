@@ -70,6 +70,10 @@ public final class LibraryService {
                 .sorted(Comparator.comparing(Book::getTitle, String.CASE_INSENSITIVE_ORDER)).toList();
     }
 
+    public boolean containsBook(String isbn) {
+        return findBookOrNull(isbn) != null;
+    }
+
     public List<Book> searchBooks(String query) {
         String search = query == null ? "" : query.trim().toLowerCase();
         if (search.isEmpty()) return getBooks();
@@ -82,6 +86,10 @@ public final class LibraryService {
 
     public List<Member> getMembers() {
         return members.stream().sorted(Comparator.comparing(Member::getName, String.CASE_INSENSITIVE_ORDER)).toList();
+    }
+
+    public boolean containsMember(String memberId) {
+        return findMemberOrNull(memberId) != null;
     }
 
     public List<Member> searchMembers(String query) {

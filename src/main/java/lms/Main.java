@@ -2,6 +2,7 @@ package lms;
 
 import lms.repository.CsvLibraryStore;
 import lms.service.LibraryService;
+import lms.service.SampleDataSeeder;
 import lms.ui.LmsFrame;
 
 import javax.swing.SwingUtilities;
@@ -19,6 +20,7 @@ public final class Main {
                 configureDefaults();
                 Path dataDirectory = Path.of(System.getProperty("user.home"), ".the-read-library");
                 LibraryService service = new LibraryService(new CsvLibraryStore(dataDirectory));
+                SampleDataSeeder.seedIfNeeded(service, dataDirectory);
                 new LmsFrame(service).setVisible(true);
             } catch (IOException | RuntimeException ex) {
                 UIManager.put("OptionPane.messageFont", new Font("Segoe UI", Font.PLAIN, 14));

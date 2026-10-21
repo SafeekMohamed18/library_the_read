@@ -65,6 +65,7 @@ public final class LibraryServiceSmokeTest {
                     "archived book history should remain available after a restart");
             verifyFinePolicy(directory.resolve("fine-policy"));
             verifyLegacyLoanMigration(directory.resolve("legacy-migration"));
+            verifySampleDataSeeding(directory.resolve("sample-data"));
             System.out.println("LibraryServiceSmokeTest passed.");
         } finally {
             try (var files = Files.list(directory)) {
@@ -72,6 +73,27 @@ public final class LibraryServiceSmokeTest {
             }
             Files.deleteIfExists(directory);
         }
+    }
+
+    private static void verifySampleDataSeeding(Path directory) throws Exception {
+        LibraryService service = new LibraryService(new CsvLibraryStore(directory));
+        SampleDataSeeder.seedIfNeeded(service, directory);
+        check(service.getBooks().size() == 7, "first run should add seven sample books");
+        check(service.getMembers().size() == 10, "first run should add ten sample members");
+
+        SampleDataSeeder.seedIfNeeded(service, directory);
+        check(service.getBooks().size() == 7, "sample books should not duplicate on later launches");
+        check(service.getMembers().size() == 10, "sample members should not duplicate on later launches");
+
+        LibraryService reopened = new LibraryService(new CsvLibraryStore(directory));
+        SampleDataSeeder.seedIfNeeded(reopened, directory);
+        check(reopened.getBooks().size() == 7 && reopened.getMembers().size() == 10,
+                "sample data and its one-time marker should persist across launches");
+
+        try (var files = Files.list(directory)) {
+            for (Path file : files.toList()) Files.deleteIfExists(file);
+        }
+        Files.deleteIfExists(directory);
     }
 
     private static void verifyFinePolicy(Path directory) throws Exception {

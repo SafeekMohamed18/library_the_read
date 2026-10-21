@@ -28,6 +28,7 @@ java -cp target\classes lms.Main
 ```
 
 The application creates its data directory under the user's home folder at `.the-read-library`. On first launch, create the librarian account on the setup screen. Its password is stored as a salted PBKDF2 hash.
+On the first launch for a data folder, the app automatically adds seven sample books and ten sample members. It seeds only once, skips records that already exist, and leaves your records unchanged on later launches.
 
 ## Stored files
 
