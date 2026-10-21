@@ -6,28 +6,37 @@ import lms.model.BorrowRecord;
 import lms.model.Member;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.awt.Image;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
 
 public final class LibraryFrame extends JFrame {
     private static final Color NAVY = new Color(31, 58, 95);
@@ -35,6 +44,8 @@ public final class LibraryFrame extends JFrame {
     private static final Color BACKGROUND = new Color(245, 247, 250);
     private static final Color MUTED = new Color(104, 115, 130);
     private static final Color RED = new Color(190, 55, 55);
+    private static final Color SIDEBAR = new Color(24, 39, 61);
+    private static final Color SIDEBAR_HOVER = new Color(42, 61, 87);
 
     private final Library library;
     private final JLabel totalBooks = new JLabel();
@@ -42,11 +53,18 @@ public final class LibraryFrame extends JFrame {
     private final JLabel borrowedBooks = new JLabel();
     private final JLabel totalMembers = new JLabel();
     private final JLabel status = new JLabel("Ready");
+    private final ImageIcon logo;
+    private final CardLayout pageLayout = new CardLayout();
+    private final JPanel pageCards = new JPanel(pageLayout);
+    private final JLabel pageTitle = new JLabel("Dashboard");
+    private final Map<String, JButton> navigationButtons = new LinkedHashMap<>();
     private DefaultTableModel dashboardBorrowRows;
 
     public LibraryFrame(Library library) {
         super("Library Management System");
         this.library = library;
+        logo = loadLogo();
+        setIconImage(logo.getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(900, 600));
         setSize(1080, 700);
@@ -56,37 +74,129 @@ public final class LibraryFrame extends JFrame {
     }
 
     private void buildInterface() {
-        JPanel root = new JPanel(new BorderLayout(0, 16));
+        JPanel root = new JPanel(new BorderLayout());
         root.setBackground(BACKGROUND);
-        root.setBorder(BorderFactory.createEmptyBorder(20, 22, 14, 22));
+        root.add(sidebar(), BorderLayout.WEST);
 
-        JPanel heading = new JPanel(new BorderLayout());
-        heading.setOpaque(false);
-        JLabel title = new JLabel("Library Management System");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        title.setForeground(NAVY);
-        JLabel subtitle = new JLabel("Manage books, members and borrowing");
-        subtitle.setForeground(MUTED);
-        JPanel titleStack = new JPanel(new GridLayout(0, 1, 0, 4));
-        titleStack.setOpaque(false);
-        titleStack.add(title);
-        titleStack.add(subtitle);
-        JButton exit = button("Exit", false);
-        exit.addActionListener(event -> dispose());
-        heading.add(titleStack, BorderLayout.WEST);
-        heading.add(exit, BorderLayout.EAST);
-        root.add(heading, BorderLayout.NORTH);
+        JPanel workspace = new JPanel(new BorderLayout());
+        workspace.setBackground(BACKGROUND);
+        workspace.add(topBar(), BorderLayout.NORTH);
 
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tabs.addTab("Dashboard", dashboardPanel());
-        tabs.addTab("Books", booksPanel());
-        tabs.addTab("Members", membersPanel());
-        tabs.addTab("Borrow / Return", borrowingPanel());
-        root.add(tabs, BorderLayout.CENTER);
+        pageCards.setBackground(BACKGROUND);
+        pageCards.add(dashboardPanel(), "Dashboard");
+        pageCards.add(booksPanel(), "Books");
+        pageCards.add(membersPanel(), "Members");
+        pageCards.add(borrowingPanel(), "Borrow / Return");
+        workspace.add(pageCards, BorderLayout.CENTER);
+
         status.setForeground(MUTED);
-        root.add(status, BorderLayout.SOUTH);
+        status.setBorder(BorderFactory.createEmptyBorder(8, 22, 12, 22));
+        workspace.add(status, BorderLayout.SOUTH);
+        root.add(workspace, BorderLayout.CENTER);
         setContentPane(root);
+        navigateTo("Dashboard");
+    }
+
+    private JPanel sidebar() {
+        JPanel sidebar = new JPanel(new BorderLayout());
+        sidebar.setBackground(SIDEBAR);
+        sidebar.setPreferredSize(new Dimension(238, 1));
+
+        JPanel brand = new JPanel();
+        brand.setBackground(Color.WHITE);
+        brand.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
+        brand.add(new JLabel(logo));
+        sidebar.add(brand, BorderLayout.NORTH);
+
+        JPanel navigation = new JPanel();
+        navigation.setBackground(SIDEBAR);
+        navigation.setBorder(BorderFactory.createEmptyBorder(24, 14, 16, 14));
+        navigation.setLayout(new BoxLayout(navigation, BoxLayout.Y_AXIS));
+        JLabel section = new JLabel("LIBRARY WORKSPACE");
+        section.setForeground(new Color(164, 179, 198));
+        section.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        section.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 0));
+        section.setAlignmentX(Component.LEFT_ALIGNMENT);
+        navigation.add(section);
+        addNavigationButton(navigation, "Dashboard", "Overview");
+        addNavigationButton(navigation, "Books", "Books");
+        addNavigationButton(navigation, "Members", "Members");
+        addNavigationButton(navigation, "Borrow / Return", "Borrow / Return");
+        sidebar.add(navigation, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel();
+        footer.setBackground(SIDEBAR);
+        footer.setBorder(BorderFactory.createEmptyBorder(12, 18, 18, 18));
+        footer.setLayout(new BoxLayout(footer, BoxLayout.Y_AXIS));
+        JLabel mode = new JLabel("OFFLINE LIBRARY DESK");
+        mode.setForeground(new Color(164, 179, 198));
+        mode.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        mode.setBorder(BorderFactory.createEmptyBorder(0, 8, 12, 8));
+        mode.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JButton exit = navigationButton("Exit application");
+        exit.addActionListener(event -> dispose());
+        footer.add(mode);
+        footer.add(exit);
+        sidebar.add(footer, BorderLayout.SOUTH);
+        return sidebar;
+    }
+
+    private void addNavigationButton(JPanel navigation, String page, String label) {
+        JButton button = navigationButton(label);
+        button.addActionListener(event -> navigateTo(page));
+        navigationButtons.put(page, button);
+        navigation.add(button);
+        navigation.add(javax.swing.Box.createVerticalStrut(6));
+    }
+
+    private JButton navigationButton(String label) {
+        JButton button = new JButton(label);
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setForeground(new Color(226, 233, 242));
+        button.setBackground(SIDEBAR);
+        button.setOpaque(true);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 10));
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
+        button.addChangeListener(event -> {
+            if (button.getModel().isRollover() && !button.getModel().isArmed()) {
+                button.setBackground(SIDEBAR_HOVER);
+            } else if (!button.getModel().isArmed()) {
+                boolean selected = navigationButtons.containsValue(button)
+                        && navigationButtons.entrySet().stream()
+                        .anyMatch(entry -> entry.getValue() == button && entry.getKey().equals(pageTitle.getText()));
+                button.setBackground(selected ? TEAL : SIDEBAR);
+            }
+        });
+        return button;
+    }
+
+    private JPanel topBar() {
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(Color.WHITE);
+        topBar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(229, 233, 239)),
+                BorderFactory.createEmptyBorder(18, 26, 18, 26)));
+        pageTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        pageTitle.setForeground(NAVY);
+        JLabel context = new JLabel("THE READ  /  LIBRARY MANAGEMENT");
+        context.setForeground(MUTED);
+        context.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        topBar.add(pageTitle, BorderLayout.WEST);
+        topBar.add(context, BorderLayout.EAST);
+        return topBar;
+    }
+
+    private void navigateTo(String page) {
+        pageTitle.setText(page);
+        pageLayout.show(pageCards, page);
+        navigationButtons.forEach((name, button) -> {
+            boolean selected = name.equals(page);
+            button.setBackground(selected ? TEAL : SIDEBAR);
+            button.setForeground(Color.WHITE);
+        });
     }
 
     private JPanel dashboardPanel() {
@@ -183,16 +293,26 @@ public final class LibraryFrame extends JFrame {
         JPanel page = card();
         page.setLayout(new BorderLayout(0, 12));
 
+        JTextField memberSearch = input();
+        memberSearch.putClientProperty("JTextField.placeholderText", "Search member ID, name, or contact");
+        JTextField bookSearch = input();
+        bookSearch.putClientProperty("JTextField.placeholderText", "Search book ID, title, author, or category");
         JComboBox<MemberChoice> members = new JComboBox<>();
         JComboBox<BookChoice> books = new JComboBox<>();
+        members.setMaximumRowCount(12);
+        books.setMaximumRowCount(12);
         JButton borrow = button("Borrow book", true);
-        JPanel form = new JPanel(new GridLayout(1, 5, 10, 0));
+        JPanel selectors = new JPanel(new GridLayout(1, 2, 12, 0));
+        selectors.setOpaque(false);
+        selectors.add(dropdownField("Select member", memberSearch, members));
+        selectors.add(dropdownField("Select available book", bookSearch, books));
+        JPanel borrowAction = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        borrowAction.setOpaque(false);
+        borrowAction.add(borrow);
+        JPanel form = new JPanel(new BorderLayout(12, 0));
         form.setOpaque(false);
-        form.add(new JLabel("Member"));
-        form.add(members);
-        form.add(new JLabel("Available book"));
-        form.add(books);
-        form.add(borrow);
+        form.add(selectors, BorderLayout.CENTER);
+        form.add(borrowAction, BorderLayout.EAST);
         page.add(form, BorderLayout.NORTH);
 
         JTable table = table(new String[]{"Book ID", "Book", "Member", "Borrowed on"});
@@ -203,15 +323,12 @@ public final class LibraryFrame extends JFrame {
         footer.add(returnBook);
         page.add(footer, BorderLayout.SOUTH);
 
+        Runnable refreshChoices = () -> {
+            refreshMemberChoices(members, memberSearch.getText());
+            refreshBookChoices(books, bookSearch.getText());
+        };
         Runnable refresh = () -> {
-            members.removeAllItems();
-            library.getMembers().stream()
-                    .sorted(java.util.Comparator.comparing(Member::getName, String.CASE_INSENSITIVE_ORDER))
-                    .forEach(member -> members.addItem(new MemberChoice(member)));
-            books.removeAllItems();
-            library.getBooks().stream().filter(Book::isAvailable)
-                    .sorted(java.util.Comparator.comparing(Book::getTitle, String.CASE_INSENSITIVE_ORDER))
-                    .forEach(book -> books.addItem(new BookChoice(book)));
+            refreshChoices.run();
             DefaultTableModel rows = (DefaultTableModel) table.getModel();
             rows.setRowCount(0);
             for (BorrowRecord record : library.getActiveBorrowRecords()) {
@@ -220,6 +337,10 @@ public final class LibraryFrame extends JFrame {
             }
             refreshDashboard();
         };
+        memberSearch.getDocument().addDocumentListener(onChange(
+                () -> refreshMemberChoices(members, memberSearch.getText())));
+        bookSearch.getDocument().addDocumentListener(onChange(
+                () -> refreshBookChoices(books, bookSearch.getText())));
         borrow.addActionListener(event -> {
             MemberChoice member = (MemberChoice) members.getSelectedItem();
             BookChoice book = (BookChoice) books.getSelectedItem();
@@ -238,6 +359,23 @@ public final class LibraryFrame extends JFrame {
         });
         refresh.run();
         return page;
+    }
+
+    private void refreshMemberChoices(JComboBox<MemberChoice> combo, String query) {
+        combo.removeAllItems();
+        library.searchMembers(query).forEach(member -> combo.addItem(new MemberChoice(member)));
+        if (!query.isBlank() && combo.getItemCount() == 0) {
+            status.setText("No matching members found.");
+        }
+    }
+
+    private void refreshBookChoices(JComboBox<BookChoice> combo, String query) {
+        combo.removeAllItems();
+        library.searchBooks(query).stream().filter(Book::isAvailable)
+                .forEach(book -> combo.addItem(new BookChoice(book)));
+        if (!query.isBlank() && combo.getItemCount() == 0) {
+            status.setText("No matching available books found.");
+        }
     }
 
     private void addBookDialog(Runnable refresh) {
@@ -340,12 +478,39 @@ public final class LibraryFrame extends JFrame {
         JOptionPane.showMessageDialog(this, message, "Library Management System", type);
     }
 
+    private static ImageIcon loadLogo() {
+        try (InputStream stream = LibraryFrame.class.getResourceAsStream("/lms/resources/the read.png")) {
+            if (stream == null) {
+                throw new IllegalStateException("Logo resource was not found: /lms/resources/the read.png");
+            }
+            var image = ImageIO.read(stream);
+            if (image == null) {
+                throw new IllegalStateException("The library logo is not a supported image.");
+            }
+            return new ImageIcon(image.getScaledInstance(92, 70, Image.SCALE_SMOOTH));
+        } catch (IOException ex) {
+            throw new IllegalStateException("Could not load the library logo.", ex);
+        }
+    }
+
     private static JPanel toolbar(JTextField search, JPanel actions) {
         JPanel toolbar = new JPanel(new BorderLayout(12, 0));
         toolbar.setOpaque(false);
         toolbar.add(search, BorderLayout.CENTER);
         toolbar.add(actions, BorderLayout.EAST);
         return toolbar;
+    }
+
+    private static JPanel dropdownField(String label, JTextField search, JComboBox<?> options) {
+        JPanel field = new JPanel(new GridLayout(0, 1, 0, 5));
+        field.setOpaque(false);
+        JLabel heading = new JLabel(label);
+        heading.setForeground(NAVY);
+        heading.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        field.add(heading);
+        field.add(search);
+        field.add(options);
+        return field;
     }
 
     private static JPanel form(String[] labels, Component[] fields) {

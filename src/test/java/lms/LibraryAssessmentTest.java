@@ -50,6 +50,8 @@ public final class LibraryAssessmentTest {
         SampleData.populate(demo);
         check(demo.getBooks().size() == 8, "demo startup should provide eight sample books");
         check(demo.getMembers().size() == 11, "demo startup should provide eleven sample members");
+        check(lms.ui.LibraryFrame.class.getResource("/lms/resources/the read.png") != null,
+                "the application logo should be available on the classpath");
         System.out.println("LibraryAssessmentTest passed.");
     }
 
