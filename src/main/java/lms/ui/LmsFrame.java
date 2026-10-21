@@ -11,6 +11,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -372,10 +373,7 @@ public final class LmsFrame extends JFrame {
         JPanel form = dialogForm(new String[]{"ISBN (10 or 13 digits)", "Title", "Author", "Category",
                 "Publisher", "Year", "Price (Rs.)", "Total copies"},
                 new Component[]{isbn, title, author, category, publisher, year, price, copies});
-        int result = JOptionPane.showConfirmDialog(this, form, existing == null ? "Add book" : "Edit book",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) return;
-        runAction(() -> {
+        showFormDialog(existing == null ? "Add book" : "Edit book", form, () -> {
             int total = Integer.parseInt(copies.getText().trim());
             Book updated = new Book(isbn.getText(), title.getText(), author.getText(), category.getText(),
                     publisher.getText(), Integer.parseInt(year.getText().trim()),
@@ -473,10 +471,7 @@ public final class LmsFrame extends JFrame {
         JPanel form = dialogForm(new String[]{"Member ID", "Name", "Phone (10 digits)", "Email",
                 "Address", "Member type", "Join date (yyyy-MM-dd)"},
                 new Component[]{id, name, phone, email, address, type, joinDate});
-        int result = JOptionPane.showConfirmDialog(this, form, existing == null ? "Add member" : "Edit member",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (result != JOptionPane.OK_OPTION) return;
-        runAction(() -> {
+        showFormDialog(existing == null ? "Add member" : "Edit member", form, () -> {
             Member updated = new Member(id.getText(), name.getText(), phone.getText(), email.getText(),
                     address.getText(), (String) type.getSelectedItem(), LocalDate.parse(joinDate.getText().trim()),
                     existing == null || existing.isActive());
@@ -667,6 +662,48 @@ public final class LmsFrame extends JFrame {
     private void showError(Exception ex) {
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Could not complete action",
                 JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showFormDialog(String title, JPanel form, IoAction saveAction, String successMessage,
+                                Runnable refresh) {
+        JDialog dialog = new JDialog(this, title, true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        JPanel body = new JPanel(new BorderLayout(0, 10));
+        body.setBackground(Color.WHITE);
+        body.setBorder(BorderFactory.createEmptyBorder(16, 16, 12, 16));
+        body.add(form, BorderLayout.CENTER);
+
+        JLabel validationMessage = new JLabel(" ");
+        validationMessage.setForeground(RED);
+        body.add(validationMessage, BorderLayout.SOUTH);
+
+        JButton save = primaryButton("Save");
+        JButton cancel = secondaryButton("Cancel");
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setBackground(Color.WHITE);
+        actions.add(cancel);
+        actions.add(save);
+
+        JPanel dialogContent = new JPanel(new BorderLayout());
+        dialogContent.add(body, BorderLayout.CENTER);
+        dialogContent.add(actions, BorderLayout.SOUTH);
+        dialog.setContentPane(dialogContent);
+        dialog.getRootPane().setDefaultButton(save);
+        cancel.addActionListener(event -> dialog.dispose());
+        save.addActionListener(event -> {
+            try {
+                saveAction.run();
+                dialog.dispose();
+                showMessage(successMessage, JOptionPane.INFORMATION_MESSAGE);
+                refresh.run();
+            } catch (IOException | IllegalArgumentException | IllegalStateException ex) {
+                validationMessage.setText(ex.getMessage());
+            }
+        });
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(540, dialog.getHeight()));
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private void showMessage(String message, int messageType) {
