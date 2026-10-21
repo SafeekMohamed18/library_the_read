@@ -1,25 +1,17 @@
-# The Read - Library Management System
+# Library Management System
 
-A small, offline Java Swing application for a single librarian workstation. It follows the supplied assignment brief and stores its records as CSV files.
+A simple Java Swing desktop application structured to match the CST 124-2 OOP final assessment.
 
 ## Requirements
 
-- JDK 17 or newer (the current development machine has JDK 26)
-- Maven 3.9+ (optional; useful for building from the command line)
-- VS Code with the Extension Pack for Java, IntelliJ IDEA Community, or another Java IDE
+- JDK 17 or later
+- VS Code with the Extension Pack for Java, or another Java IDE
 
-No database server or internet connection is needed to run the application. The interface uses built-in Swing components and a custom light theme, so there are no runtime UI dependencies.
+No database, API, Maven dependency, or internet connection is required to run the application.
 
-## Run
+## Run from PowerShell
 
-Open this folder in a Java IDE and run `lms.Main`, or use Maven:
-
-```powershell
-mvn package
-java -jar target/the-read-library-1.0.0.jar
-```
-
-Without Maven, compile and launch from PowerShell:
+From the project folder:
 
 ```powershell
 New-Item -ItemType Directory -Force target\classes | Out-Null
@@ -27,32 +19,33 @@ javac --release 17 -encoding UTF-8 -d target\classes (Get-ChildItem -Recurse -Fi
 java -cp target\classes lms.Main
 ```
 
-The application creates its data directory under the user's home folder at `.the-read-library`. On first launch, create the librarian account on the setup screen. Its password is stored as a salted PBKDF2 hash.
-On the first launch for a data folder, the app automatically adds seven sample books and ten sample members. It seeds only once, skips records that already exist, and leaves your records unchanged on later launches.
+Alternatively, open the project in a Java IDE and run `lms.Main`.
 
-## Stored files
+The application starts with eight sample books and eleven sample members. It uses in-memory `ArrayList` collections, as allowed by the assessment. Changes made while the app is running are not saved after closing it.
 
-The application creates `books.csv`, `members.csv`, `rentals.csv`, and `librarians.csv` under `.the-read-library`. Writes use temporary files and replace the previous data file only after the new file has been written. A `.bak` copy of the previous file is kept. Existing `loans.csv` data is read automatically and new saves use `rentals.csv`.
-Books with completed rental history are archived when removed from the catalogue so historical reports stay valid.
+## Features
 
-## Core smoke test
+- Dashboard with total, available, and borrowed book counts plus member count
+- Add, view, search, and remove books
+- View and search members; add members
+- Borrow an available book for a selected member
+- Return a borrowed book and update its borrowing record
+- Input validation, duplicate-ID protection, and clear error messages
 
-The test has no external dependencies. After compiling the main source as above, run:
+## OOP class design
+
+- `Book` and `Member` encapsulate their fields and validation.
+- `BorrowRecord` relates a `Book` to a `Member` and records borrowing and return dates.
+- `Library` owns the `ArrayList` collections and provides the application's book, member, borrow, return, and search methods.
+- `LibraryFrame` builds the Swing interface and calls `Library` methods; the rules are not implemented only in button event handlers.
+- `SampleData` creates the demo records used when `Main` starts.
+
+## Run the assessment checks
 
 ```powershell
 New-Item -ItemType Directory -Force target\test-classes | Out-Null
 javac --release 17 -encoding UTF-8 -cp target\classes -d target\test-classes (Get-ChildItem -Recurse -Filter *.java src\test\java | ForEach-Object { $_.FullName })
-java -ea -cp "target\classes;target\test-classes" lms.service.LibraryServiceSmokeTest
+java -ea -cp "target\classes;target\test-classes" lms.LibraryAssessmentTest
 ```
 
-## Assignment rules
-
-- Maximum of 3 active rentals per member
-- Standard rental duration of 14 days
-- One renewal of 7 days, only before the due date
-- Fine of Rs. 10 per overdue day, capped at the book price
-- Overdue rentals and unpaid fines block new issues
-- ISBN and member IDs must be unique
-- Books with active rentals cannot be deleted; members are deactivated instead
-
-The rental limit, rental duration, renewal duration, and fine rate are centralized in `LibraryService`.
+The previous CSV files in `%USERPROFILE%\.the-read-library` are left untouched, but this assessment-aligned version uses in-memory collections and does not load them.

@@ -1,47 +1,40 @@
 package lms.model;
 
-import java.time.LocalDate;
+public final class Member {
+    private final String memberId;
+    private String name;
+    private String contactNumber;
 
-public final class Member extends Person {
-    private final String memberType;
-    private final LocalDate joinDate;
-    private final String address;
-    private boolean active;
+    public Member(String memberId, String name, String contactNumber) {
+        this.memberId = requireText(memberId, "Member ID");
+        setName(name);
+        setContactNumber(contactNumber);
+    }
 
-    public Member(String id, String name, String phone, String email, String address, String memberType,
-                  LocalDate joinDate, boolean active) {
-        super(id, name, phone, email);
-        if (!"Student".equals(memberType) && !"Staff".equals(memberType)) {
-            throw new IllegalArgumentException("Member type must be Student or Staff.");
+    public String getMemberId() {
+        return memberId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = requireText(name, "Member name");
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = requireText(contactNumber, "Contact number");
+    }
+
+    private static String requireText(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(label + " is required.");
         }
-        this.memberType = memberType;
-        this.joinDate = joinDate == null ? LocalDate.now() : joinDate;
-        this.address = requireText(address, "Address");
-        this.active = active;
-    }
-
-    public String getMemberType() {
-        return memberType;
-    }
-
-    public LocalDate getJoinDate() {
-        return joinDate;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    @Override
-    public String getRole() {
-        return "Member";
+        return value.trim();
     }
 }
