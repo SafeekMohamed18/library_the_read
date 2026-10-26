@@ -75,6 +75,19 @@ public final class Library {
         members.add(member);
     }
 
+    public void updateBook(String bookId, String title, String author, String category) {
+        Book book = requireBook(bookId);
+        book.setTitle(title);
+        book.setAuthor(author);
+        book.setCategory(category);
+    }
+
+    public void updateMember(String memberId, String name, String contactNumber) {
+        Member member = requireMember(memberId);
+        member.setName(name);
+        member.setContactNumber(contactNumber);
+    }
+
     public BorrowRecord borrowBook(String memberId, String bookId) {
         Member member = requireMember(memberId);
         Book book = requireBook(bookId);

@@ -228,10 +228,12 @@ public final class LibraryFrame extends JFrame {
         JTextField search = input();
         search.putClientProperty("JTextField.placeholderText", "Search by book ID, title, author or category");
         JButton add = button("Add book", true);
+        JButton edit = button("Edit selected", false);
         JButton remove = button("Remove selected", false);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.add(add);
+        actions.add(edit);
         actions.add(remove);
         page.add(toolbar(search, actions), BorderLayout.NORTH);
 
@@ -248,6 +250,7 @@ public final class LibraryFrame extends JFrame {
             refreshDashboard();
         };
         add.addActionListener(event -> addBookDialog(refresh));
+        edit.addActionListener(event -> editBookDialog(table, refresh));
         remove.addActionListener(event -> {
             String id = selectedValue(table, 0);
             if (id == null) return;
@@ -267,9 +270,11 @@ public final class LibraryFrame extends JFrame {
         JTextField search = input();
         search.putClientProperty("JTextField.placeholderText", "Search by member ID, name or contact number");
         JButton add = button("Add member", true);
+        JButton edit = button("Edit selected", false);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.add(add);
+        actions.add(edit);
         page.add(toolbar(search, actions), BorderLayout.NORTH);
 
         JTable table = table(new String[]{"Member ID", "Member name", "Contact number"});
@@ -284,6 +289,7 @@ public final class LibraryFrame extends JFrame {
             refreshDashboard();
         };
         add.addActionListener(event -> addMemberDialog(refresh));
+        edit.addActionListener(event -> editMemberDialog(table, refresh));
         search.getDocument().addDocumentListener(onChange(refresh));
         refresh.run();
         return page;
@@ -390,6 +396,29 @@ public final class LibraryFrame extends JFrame {
                 "Book added successfully.", refresh);
     }
 
+    private void editBookDialog(JTable table, Runnable refresh) {
+        String bookId = selectedValue(table, 0);
+        if (bookId == null) return;
+        Book book = library.findBook(bookId);
+
+        JTextField id = input();
+        id.setText(book.getBookId());
+        id.setEditable(false);
+        id.setBackground(new Color(242, 244, 247));
+        JTextField title = input();
+        title.setText(book.getTitle());
+        JTextField author = input();
+        author.setText(book.getAuthor());
+        JTextField category = input();
+        category.setText(book.getCategory());
+
+        JPanel form = form(new String[]{"Book ID", "Book title", "Author", "Category"},
+                new Component[]{id, title, author, category});
+        showFormDialog("Edit book", form, () -> {
+            library.updateBook(bookId, title.getText(), author.getText(), category.getText());
+        }, "Book updated successfully.", refresh);
+    }
+
     private void addMemberDialog(Runnable refresh) {
         JTextField id = input();
         JTextField name = input();
@@ -399,6 +428,27 @@ public final class LibraryFrame extends JFrame {
         showFormDialog("Add member", form, () -> library.addMember(
                 new Member(id.getText(), name.getText(), contact.getText())),
                 "Member added successfully.", refresh);
+    }
+
+    private void editMemberDialog(JTable table, Runnable refresh) {
+        String memberId = selectedValue(table, 0);
+        if (memberId == null) return;
+        Member member = library.findMember(memberId);
+
+        JTextField id = input();
+        id.setText(member.getMemberId());
+        id.setEditable(false);
+        id.setBackground(new Color(242, 244, 247));
+        JTextField name = input();
+        name.setText(member.getName());
+        JTextField contact = input();
+        contact.setText(member.getContactNumber());
+
+        JPanel form = form(new String[]{"Member ID", "Member name", "Contact number"},
+                new Component[]{id, name, contact});
+        showFormDialog("Edit member", form, () -> {
+            library.updateMember(memberId, name.getText(), contact.getText());
+        }, "Member updated successfully.", refresh);
     }
 
     private void showFormDialog(String title, JPanel form, Runnable saveAction,
