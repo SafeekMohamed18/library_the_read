@@ -8,7 +8,7 @@ public final class SampleData {
     }
 
     public static void populate(Library library) {
-        library.addBook(new Book("1234567895", "Kovai", "Keerthi", "Comedy"));
+        library.addBook(new Book("1234560007895", "Kovai", "Keerthi", "Comedy"));
         library.addBook(new Book("9780000000001", "The Midnight Library", "Matt Haig", "Fiction"));
         library.addBook(new Book("9780000000002", "Wings of Fire", "A. P. J. Abdul Kalam", "Autobiography"));
         library.addBook(new Book("9780000000003", "The Alchemist", "Paulo Coelho", "Fiction"));
@@ -17,7 +17,7 @@ public final class SampleData {
         library.addBook(new Book("9780000000006", "The Blue Umbrella", "Ruskin Bond", "Children"));
         library.addBook(new Book("9780000000007", "Ikigai", "Hector Garcia", "Self-help"));
 
-        library.addMember(new Member("001", "Kuga", "0123456789"));
+        library.addMember(new Member("M001", "Kuga", "0123456789"));
         library.addMember(new Member("M002", "Ananya Perera", "7000000002"));
         library.addMember(new Member("M003", "Ravi Kumar", "7000000003"));
         library.addMember(new Member("M004", "Nila Fernando", "7000000004"));
