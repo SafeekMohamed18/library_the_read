@@ -31,6 +31,11 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.RenderingHints;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.awt.Image;
@@ -39,13 +44,26 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 public final class LibraryFrame extends JFrame {
-    private static final Color NAVY = new Color(31, 58, 95);
-    private static final Color TEAL = new Color(42, 157, 143);
-    private static final Color BACKGROUND = new Color(245, 247, 250);
-    private static final Color MUTED = new Color(104, 115, 130);
-    private static final Color RED = new Color(190, 55, 55);
-    private static final Color SIDEBAR = new Color(24, 39, 61);
-    private static final Color SIDEBAR_HOVER = new Color(42, 61, 87);
+    private static final Color PRIMARY = new Color(0x0D, 0x94, 0x88);
+    private static final Color PRIMARY_HOVER = new Color(0x0F, 0x76, 0x6E);
+    private static final Color ACCENT_START = new Color(0x14, 0xB8, 0xA6);
+    private static final Color ACCENT_END = new Color(0x06, 0xB6, 0xD4);
+    private static final Color SOFT_TINT = new Color(0xF0, 0xFD, 0xFA);
+    private static final Color BACKGROUND = new Color(0xF6, 0xFA, 0xF9);
+    private static final Color SURFACE = Color.WHITE;
+    private static final Color BORDER = new Color(0xDD, 0xE7, 0xE5);
+    private static final Color TEXT = new Color(0x0B, 0x1F, 0x1E);
+    private static final Color MUTED = new Color(0x5B, 0x73, 0x70);
+    private static final Color AVAILABLE_TEXT = new Color(0x16, 0xA3, 0x4A);
+    private static final Color AVAILABLE_BACKGROUND = new Color(0xDC, 0xFC, 0xE7);
+    private static final Color BORROWED_TEXT = new Color(0xCA, 0x8A, 0x04);
+    private static final Color BORROWED_BACKGROUND = new Color(0xFE, 0xF9, 0xC3);
+    private static final Color OVERDUE_TEXT = new Color(0xDC, 0x26, 0x26);
+    private static final Color OVERDUE_BACKGROUND = new Color(0xFE, 0xE2, 0xE2);
+    private static final Color RESERVED_TEXT = new Color(0x7C, 0x3A, 0xED);
+    private static final Color RESERVED_BACKGROUND = new Color(0xED, 0xE9, 0xFE);
+    private static final Color SIDEBAR = SURFACE;
+    private static final Color SIDEBAR_HOVER = SOFT_TINT;
 
     private final Library library;
     private final JLabel totalBooks = new JLabel();
@@ -103,7 +121,7 @@ public final class LibraryFrame extends JFrame {
         sidebar.setPreferredSize(new Dimension(238, 1));
 
         JPanel brand = new JPanel();
-        brand.setBackground(Color.WHITE);
+        brand.setBackground(SURFACE);
         brand.setBorder(BorderFactory.createEmptyBorder(12, 18, 12, 18));
         brand.add(new JLabel(logo));
         sidebar.add(brand, BorderLayout.NORTH);
@@ -113,7 +131,7 @@ public final class LibraryFrame extends JFrame {
         navigation.setBorder(BorderFactory.createEmptyBorder(24, 14, 16, 14));
         navigation.setLayout(new BoxLayout(navigation, BoxLayout.Y_AXIS));
         JLabel section = new JLabel("LIBRARY WORKSPACE");
-        section.setForeground(new Color(164, 179, 198));
+        section.setForeground(MUTED);
         section.setFont(new Font("Segoe UI", Font.BOLD, 11));
         section.setBorder(BorderFactory.createEmptyBorder(0, 12, 12, 0));
         section.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -129,7 +147,7 @@ public final class LibraryFrame extends JFrame {
         footer.setBorder(BorderFactory.createEmptyBorder(12, 18, 18, 18));
         footer.setLayout(new BoxLayout(footer, BoxLayout.Y_AXIS));
         JLabel mode = new JLabel("OFFLINE LIBRARY DESK");
-        mode.setForeground(new Color(164, 179, 198));
+        mode.setForeground(MUTED);
         mode.setFont(new Font("Segoe UI", Font.BOLD, 10));
         mode.setBorder(BorderFactory.createEmptyBorder(0, 8, 12, 8));
         mode.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -153,7 +171,7 @@ public final class LibraryFrame extends JFrame {
         JButton button = new JButton(label);
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setForeground(new Color(226, 233, 242));
+        button.setForeground(TEXT);
         button.setBackground(SIDEBAR);
         button.setOpaque(true);
         button.setFocusPainted(false);
@@ -163,11 +181,13 @@ public final class LibraryFrame extends JFrame {
         button.addChangeListener(event -> {
             if (button.getModel().isRollover() && !button.getModel().isArmed()) {
                 button.setBackground(SIDEBAR_HOVER);
+                button.setForeground(PRIMARY_HOVER);
             } else if (!button.getModel().isArmed()) {
                 boolean selected = navigationButtons.containsValue(button)
                         && navigationButtons.entrySet().stream()
                         .anyMatch(entry -> entry.getValue() == button && entry.getKey().equals(pageTitle.getText()));
-                button.setBackground(selected ? TEAL : SIDEBAR);
+                button.setBackground(selected ? SOFT_TINT : SIDEBAR);
+                button.setForeground(selected ? PRIMARY : TEXT);
             }
         });
         return button;
@@ -175,12 +195,12 @@ public final class LibraryFrame extends JFrame {
 
     private JPanel topBar() {
         JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(Color.WHITE);
+        topBar.setBackground(SURFACE);
         topBar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(229, 233, 239)),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
                 BorderFactory.createEmptyBorder(18, 26, 18, 26)));
         pageTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        pageTitle.setForeground(NAVY);
+        pageTitle.setForeground(TEXT);
         JLabel context = new JLabel("THE READ  /  LIBRARY MANAGEMENT");
         context.setForeground(MUTED);
         context.setFont(new Font("Segoe UI", Font.BOLD, 11));
@@ -194,8 +214,8 @@ public final class LibraryFrame extends JFrame {
         pageLayout.show(pageCards, page);
         navigationButtons.forEach((name, button) -> {
             boolean selected = name.equals(page);
-            button.setBackground(selected ? TEAL : SIDEBAR);
-            button.setForeground(Color.WHITE);
+            button.setBackground(selected ? SOFT_TINT : SIDEBAR);
+            button.setForeground(selected ? PRIMARY : TEXT);
         });
     }
 
@@ -206,10 +226,10 @@ public final class LibraryFrame extends JFrame {
 
         JPanel stats = new JPanel(new GridLayout(1, 4, 12, 0));
         stats.setOpaque(false);
-        stats.add(statCard("Total books", totalBooks, NAVY));
-        stats.add(statCard("Available", availableBooks, TEAL));
-        stats.add(statCard("Borrowed", borrowedBooks, new Color(93, 120, 156)));
-        stats.add(statCard("Members", totalMembers, NAVY));
+        stats.add(statCard("Total books", totalBooks, PRIMARY));
+        stats.add(statCard("Available", availableBooks, ACCENT_START));
+        stats.add(statCard("Borrowed", borrowedBooks, ACCENT_END));
+        stats.add(statCard("Members", totalMembers, TEXT));
         page.add(stats, BorderLayout.NORTH);
 
         JPanel current = card();
@@ -404,7 +424,7 @@ public final class LibraryFrame extends JFrame {
         JTextField id = input();
         id.setText(book.getBookId());
         id.setEditable(false);
-        id.setBackground(new Color(242, 244, 247));
+        id.setBackground(BACKGROUND);
         JTextField title = input();
         title.setText(book.getTitle());
         JTextField author = input();
@@ -438,7 +458,7 @@ public final class LibraryFrame extends JFrame {
         JTextField id = input();
         id.setText(member.getMemberId());
         id.setEditable(false);
-        id.setBackground(new Color(242, 244, 247));
+        id.setBackground(BACKGROUND);
         JTextField name = input();
         name.setText(member.getName());
         JTextField contact = input();
@@ -456,11 +476,11 @@ public final class LibraryFrame extends JFrame {
         JDialog dialog = new JDialog(this, title, true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         JPanel body = new JPanel(new BorderLayout(0, 10));
-        body.setBackground(Color.WHITE);
+        body.setBackground(SURFACE);
         body.setBorder(BorderFactory.createEmptyBorder(16, 16, 12, 16));
         body.add(form, BorderLayout.CENTER);
         JLabel error = new JLabel(" ");
-        error.setForeground(RED);
+        error.setForeground(OVERDUE_TEXT);
         body.add(error, BorderLayout.SOUTH);
 
         JButton save = button("Save", true);
@@ -555,7 +575,7 @@ public final class LibraryFrame extends JFrame {
         JPanel field = new JPanel(new GridLayout(0, 1, 0, 5));
         field.setOpaque(false);
         JLabel heading = new JLabel(label);
-        heading.setForeground(NAVY);
+        heading.setForeground(TEXT);
         heading.setFont(new Font("Segoe UI", Font.BOLD, 12));
         field.add(heading);
         field.add(search);
@@ -575,9 +595,9 @@ public final class LibraryFrame extends JFrame {
 
     private static JPanel card() {
         JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
+        panel.setBackground(SURFACE);
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(229, 233, 239)),
+                BorderFactory.createLineBorder(BORDER),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16)));
         return panel;
     }
@@ -597,7 +617,7 @@ public final class LibraryFrame extends JFrame {
     private static JLabel sectionTitle(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        label.setForeground(NAVY);
+        label.setForeground(TEXT);
         return label;
     }
 
@@ -614,10 +634,65 @@ public final class LibraryFrame extends JFrame {
         table.setRowHeight(29);
         table.setAutoCreateRowSorter(true);
         table.setShowVerticalLines(false);
-        table.setGridColor(new Color(232, 236, 241));
-        table.getTableHeader().setBackground(new Color(239, 243, 248));
-        table.getTableHeader().setForeground(NAVY);
+        table.setGridColor(BORDER);
+        table.getTableHeader().setBackground(BACKGROUND);
+        table.getTableHeader().setForeground(TEXT);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        table.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable source, Object value,
+                                                           boolean selected, boolean focused,
+                                                           int row, int column) {
+                Component component = super.getTableCellRendererComponent(
+                        source, value, selected, focused, row, column);
+                String columnName = source.getColumnName(column);
+                String statusText = value == null ? "" : value.toString();
+                if ("Availability".equals(columnName)) {
+                    switch (statusText) {
+                        case "Available" -> {
+                            component.setForeground(AVAILABLE_TEXT);
+                            component.setBackground(AVAILABLE_BACKGROUND);
+                        }
+                        case "Borrowed" -> {
+                            component.setForeground(BORROWED_TEXT);
+                            component.setBackground(BORROWED_BACKGROUND);
+                        }
+                        case "Overdue" -> {
+                            component.setForeground(OVERDUE_TEXT);
+                            component.setBackground(OVERDUE_BACKGROUND);
+                        }
+                        case "Reserved" -> {
+                            component.setForeground(RESERVED_TEXT);
+                            component.setBackground(RESERVED_BACKGROUND);
+                        }
+                        default -> {
+                            component.setForeground(TEXT);
+                            component.setBackground(SURFACE);
+                        }
+                    }
+                    return component;
+                }
+                Point mousePosition = source.getMousePosition();
+                int hoveredRow = mousePosition == null ? -1 : source.rowAtPoint(mousePosition);
+                if (selected) {
+                    component.setBackground(SOFT_TINT);
+                    component.setForeground(PRIMARY_HOVER);
+                } else if (row == hoveredRow) {
+                    component.setBackground(SOFT_TINT);
+                    component.setForeground(TEXT);
+                } else {
+                    component.setBackground(SURFACE);
+                    component.setForeground(TEXT);
+                }
+                return component;
+            }
+        });
+        table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent event) {
+                table.repaint();
+            }
+        });
         return table;
     }
 
@@ -626,19 +701,39 @@ public final class LibraryFrame extends JFrame {
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setPreferredSize(new Dimension(240, 36));
         field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(216, 223, 231)),
+                BorderFactory.createLineBorder(BORDER),
                 BorderFactory.createEmptyBorder(7, 10, 7, 10)));
         return field;
     }
 
     private static JButton button(String text, boolean primary) {
-        JButton button = new JButton(text);
-        button.setBackground(primary ? TEAL : new Color(232, 238, 245));
-        button.setForeground(primary ? Color.WHITE : NAVY);
+        JButton button = primary ? new GradientButton(text) : new JButton(text);
+        button.setBackground(primary ? PRIMARY : BACKGROUND);
+        button.setForeground(primary ? Color.WHITE : TEXT);
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(9, 14, 9, 14));
         return button;
+    }
+
+    private static final class GradientButton extends JButton {
+        private GradientButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D graphics2D = (Graphics2D) graphics.create();
+            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Color start = getModel().isRollover() ? PRIMARY_HOVER : ACCENT_START;
+            Color end = getModel().isRollover() ? PRIMARY_HOVER : ACCENT_END;
+            graphics2D.setPaint(new GradientPaint(0, 0, start, getWidth(), getHeight(), end));
+            graphics2D.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+            graphics2D.dispose();
+            super.paintComponent(graphics);
+        }
     }
 
     private static DocumentListener onChange(Runnable action) {
